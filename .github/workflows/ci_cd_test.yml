@@ -39,7 +39,8 @@ jobs:
           echo "::set-output name=new_version::$new_version"
 
       - name: Pull Base Image
-        run: docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx:latest
+        # run: docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx:latest
+        run: docker pull nginx:latest
 
       - name: Release Docker Image
         run: |
