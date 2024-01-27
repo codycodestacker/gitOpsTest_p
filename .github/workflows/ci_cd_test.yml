@@ -28,15 +28,24 @@ jobs:
           # latest_version=$(git describe --abbrev=0 --tags)
           latest_version=$(grep '${{ secrets.DOCKER_HUB_USERNAME }}/nginx:' my-app/1-deployment.yml)
 
+          # echo "Lates version: $latest_version"
+
           # Extract the numeric part of the version
           version_number=$(echo $latest_version | grep -oP '\d+')
+          last_digit=$(echo $version_number | grep -oP '\d+$')
+
+          echo "Lates version: $version_number"
 
           # Increment the version number by one
-          new_version=$((version_number + 1))
+          # new_version=$(($version_number + 1))
+          new_version=$(($last_digit + 1))
+
+          # Combine the first part of the version and the incremented last digit
+          new_version_full=$(echo $version_number | sed "s/\([0-9]\+\)$/$new_version/")
 
           # Set the new version as an output for later use
-          echo "New version: $new_version"
-          echo "::set-output name=new_version::$new_version"
+          echo "New version: $new_version_full"
+          echo "::set-output name=new_version::$new_version_full"
 
       - name: Pull Base Image
         # run: docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx:latest
@@ -49,7 +58,7 @@ jobs:
           echo "new version: $new_ver"
 
           # Simulate release of the new docker images
-          docker tag ${{ secrets.DOCKER_HUB_USERNAME }}/nginx:latest ${{ secrets.DOCKER_HUB_USERNAME }}/nginx:$new_ver
+          docker tag nginx:latest ${{ secrets.DOCKER_HUB_USERNAME }}/nginx:$new_ver
 
           # Push new version to dockerhub
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/nginx:$new_ver
