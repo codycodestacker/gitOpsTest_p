@@ -76,7 +76,7 @@ jobs:
           git clone https://github.com/codycodestacker/gitOpsTest_p.git $tmp_dir
 
           # Update image tag
-          sed -i '' -e "s/${{ secrets.DOCKER_HUB_USERNAME }}\/nginx:.*/${{ secrets.DOCKER_HUB_USERNAME }}\/nginx:$new_ver/g" $tmp_dir/my-app/1-deployment.yaml
+          sed -i '' -e "s/${{ secrets.DOCKER_HUB_USERNAME }}\/nginx:.*/${{ secrets.DOCKER_HUB_USERNAME }}\/nginx:$new_ver/g" $tmp_dir/my-app/1-deployment.yml
 
           # Commit and push
           cd $tmp_dir
