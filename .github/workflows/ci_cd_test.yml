@@ -26,7 +26,7 @@ jobs:
         run: |
           # Get the latest version tag from the repository
           # latest_version=$(git describe --abbrev=0 --tags)
-          latest_version=$(grep '${{ secrets.DOCKER_HUB_USERNAME }}/nginx:' my-app/1-deployment.yaml)
+          latest_version=$(grep '${{ secrets.DOCKER_HUB_USERNAME }}/nginx:' my-app/1-deployment.yml)
 
           # Extract the numeric part of the version
           version_number=$(echo $latest_version | grep -oP '\d+')
