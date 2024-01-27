@@ -1,0 +1,79 @@
+name: Release and Update Deployment
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  release_and_update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Determine New Version
+        id: determine_version
+        run: |
+          # Get the latest version tag from the repository
+          # latest_version=$(git describe --abbrev=0 --tags)
+          latest_version=$(grep '${{ secrets.DOCKER_HUB_USERNAME }}/nginx:' my-app/1-deployment.yaml)
+
+          # Extract the numeric part of the version
+          version_number=$(echo $latest_version | grep -oP '\d+')
+
+          # Increment the version number by one
+          new_version=$((version_number + 1))
+
+          # Set the new version as an output for later use
+          echo "New version: $new_version"
+          echo "::set-output name=new_version::$new_version"
+
+      - name: Pull Base Image
+        run: docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/nginx:latest
+
+      - name: Release Docker Image
+        run: |
+          new_ver=${{ steps.determine_version.outputs.new_version }}
+
+          echo "new version: $new_ver"
+
+          # Simulate release of the new docker images
+          docker tag ${{ secrets.DOCKER_HUB_USERNAME }}/nginx:latest ${{ secrets.DOCKER_HUB_USERNAME }}/nginx:$new_ver
+
+          # Push new version to dockerhub
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/nginx:$new_ver
+
+      - name: Update Kubernetes Deployment
+        run: |
+          new_ver=${{ steps.determine_version.outputs.new_version }}
+
+          # Create temporary folder
+          tmp_dir=$(mktemp -d)
+          echo $tmp_dir
+
+          # Clone GitHub repo
+          git clone https://github.com/codycodestacker/gitOpsTest_p.git $tmp_dir
+
+          # Update image tag
+          sed -i '' -e "s/${{ secrets.DOCKER_HUB_USERNAME }}\/nginx:.*/${{ secrets.DOCKER_HUB_USERNAME }}\/nginx:$new_ver/g" $tmp_dir/my-app/1-deployment.yaml
+
+          # Commit and push
+          cd $tmp_dir
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add .
+          git commit -m "Update image to $new_ver"
+          git push
+
+          # Optionally on build agents - remove folder
+          rm -rf $tmp_dir
